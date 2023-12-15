@@ -1,0 +1,13 @@
+__pycache__
+.vscode
+samples
+xformers
+src
+third_party
+backup
+pretrained_models
+*.nfs*
+./*.png
+./*.mp4
+demo/tmp
+demo/outputs
