@@ -78,16 +78,16 @@ class MagicAnimate():
         unet.to(torch.float16)
         text_encoder.to(torch.float16)
         # controlnet.to(torch.float16)
-        controlnet1.enable_xformers_memory_efficient_attention() #fix
-        controlnet2.enable_xformers_memory_efficient_attention() #fix
+        controlnet1 = controlnet1.to(torch.float16).to("cuda") #fix
+        controlnet2 = controlnet2.to(torch.float16).to("cuda") #fix
+
         self.appearance_encoder.to(torch.float16)
         
         unet.enable_xformers_memory_efficient_attention()
         self.appearance_encoder.enable_xformers_memory_efficient_attention()
         # controlnet.enable_xformers_memory_efficient_attention()
-        controlnet1.to(torch.float16) #fix
-        controlnet2.to(torch.float16) #fix
-
+        controlnet1.enable_xformers_memory_efficient_attention() #fix
+        controlnet2.enable_xformers_memory_efficient_attention() #fix
 
         self.processors = [ControlNetProcessor(controlnet1), ControlNetProcessor(controlnet2)]
 
