@@ -18,8 +18,14 @@ from demo.animate import MagicAnimate
 
 animator = MagicAnimate()
 
-def animate(reference_image, motion_sequence_state, seed, steps, guidance_scale):
-    return animator(reference_image, motion_sequence_state, seed, steps, guidance_scale)
+# def animate(reference_image, motion_sequence_state, seed, steps, guidance_scale):
+#     return animator(reference_image, motion_sequence_state, seed, steps, guidance_scale)
+
+
+def animate(reference_image, motion_sequence1, motion_sequence2, seed, steps, guidance_scale):
+    # You may need to modify the animator function to handle two motion sequences
+    motion_sequence_list = [motion_sequence1, motion_sequence2]
+    return animator(reference_image, motion_sequence_list, seed, steps, guidance_scale)
 
 with gr.Blocks() as demo:
 
@@ -42,14 +48,16 @@ with gr.Blocks() as demo:
     animation = gr.Video(format="mp4", label="Animation Results", autoplay=True)
     
     with gr.Row():
-        reference_image  = gr.Image(label="Reference Image")
-        motion_sequence  = gr.Video(format="mp4", label="Motion Sequence")
+        reference_image = gr.Image(label="Reference Image")
+        with gr.Column():
+            motion_sequence1 = gr.Video(format="mp4", label="Motion Sequence 1")
+            motion_sequence2 = gr.Video(format="mp4", label="Motion Sequence 2")
         
         with gr.Column():
-            random_seed         = gr.Textbox(label="Random seed", value=1, info="default: -1")
-            sampling_steps      = gr.Textbox(label="Sampling steps", value=25, info="default: 25")
-            guidance_scale      = gr.Textbox(label="Guidance scale", value=7.5, info="default: 7.5")
-            submit              = gr.Button("Animate")
+            random_seed        = gr.Textbox(label="Random seed", value=1)
+            sampling_steps     = gr.Textbox(label="Sampling steps", value=25)
+            guidance_scale     = gr.Textbox(label="Guidance scale", value=7.5)
+            submit             = gr.Button("Animate")
 
     def read_video(video):
         reader = imageio.get_reader(video)
@@ -58,23 +66,32 @@ with gr.Blocks() as demo:
     
     def read_image(image, size=512):
         return np.array(Image.fromarray(image).resize((size, size)))
-    
-    # when user uploads a new video
-    motion_sequence.upload(
+
+    # when user uploads a new video for the first motion sequence
+    motion_sequence1.upload(
         read_video,
-        motion_sequence,
-        motion_sequence
+        motion_sequence1,
+        motion_sequence1
     )
-    # when `first_frame` is updated
+
+    # when user uploads a new video for the second motion sequence
+    motion_sequence2.upload(
+        read_video,
+        motion_sequence2,
+        motion_sequence2
+    )
+
+    # when a new reference image is uploaded
     reference_image.upload(
         read_image,
         reference_image,
         reference_image
     )
+    
     # when the `submit` button is clicked
     submit.click(
         animate,
-        [reference_image, motion_sequence, random_seed, sampling_steps, guidance_scale], 
+        [reference_image, motion_sequence1, motion_sequence2, random_seed, sampling_steps, guidance_scale], 
         animation
     )
 
@@ -88,7 +105,7 @@ with gr.Blocks() as demo:
             ["inputs/applications/source_image/dalle8.jpeg", "inputs/applications/driving/densepose/dancing2.mp4"],
             ["inputs/applications/source_image/multi1_source.png", "inputs/applications/driving/densepose/multi_dancing.mp4"],
         ],
-        inputs=[reference_image, motion_sequence],
+        inputs=[reference_image, motion_sequence1, motion_sequence2],
         outputs=animation,
     )
 

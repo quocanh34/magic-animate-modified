@@ -81,7 +81,7 @@ class AnimationPipeline(DiffusionPipeline):
         tokenizer: CLIPTokenizer,
         unet: UNet3DConditionModel,
         # controlnet: ControlNetModel,
-        processors: List[ControlNetProcessor],
+        # processors: List[ControlNetProcessor],
         scheduler: Union[
             DDIMScheduler,
             PNDMScheduler,
@@ -146,7 +146,7 @@ class AnimationPipeline(DiffusionPipeline):
             text_encoder=text_encoder,
             tokenizer=tokenizer,
             unet=unet,
-            controlnet=controlnet,
+            # controlnet1=processors[0],
             scheduler=scheduler,
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
@@ -351,14 +351,25 @@ class AnimationPipeline(DiffusionPipeline):
         latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-    def prepare_condition(self, condition, num_videos_per_prompt, device, dtype, do_classifier_free_guidance):
-        # prepare conditions for controlnet
-        condition = torch.from_numpy(condition.copy()).to(device=device, dtype=dtype) / 255.0
-        condition = torch.stack([condition for _ in range(num_videos_per_prompt)], dim=0)
-        condition = rearrange(condition, 'b f h w c -> (b f) c h w').clone()
+    def prepare_condition(self, condition1, condition2, num_videos_per_prompt, device, dtype, do_classifier_free_guidance):
+        # Prepare first condition
+        condition1 = torch.from_numpy(condition1.copy()).to(device=device, dtype=dtype) / 255.0
+        condition1 = torch.stack([condition1 for _ in range(num_videos_per_prompt)], dim=0)
+        condition1 = rearrange(condition1, 'b f h w c -> (b f) c h w').clone()
+
+        # Prepare second condition
+        condition2 = torch.from_numpy(condition2.copy()).to(device=device, dtype=dtype) / 255.0
+        condition2 = torch.stack([condition2 for _ in range(num_videos_per_prompt)], dim=0)
+        condition2 = rearrange(condition2, 'b f h w c -> (b f) c h w').clone()
+
+        # Here, we're averaging the two conditions
+        combined_condition = (condition1 + condition2) / 2
+
         if do_classifier_free_guidance:
-            condition = torch.cat([condition] * 2)
-        return condition
+            combined_condition = torch.cat([combined_condition] * 2)
+
+        combined_condition = torch.from_numpy(combined_condition.copy()).to(device=device, dtype=dtype)
+        return combined_condition
 
     def next_step(
         self,
@@ -526,8 +537,8 @@ class AnimationPipeline(DiffusionPipeline):
     @torch.no_grad()
     def __call__(
         self,
-        # processors: List[ControlNetProcessor], #fix
         prompt: Union[str, List[str]],
+        processors: List[ControlNetProcessor], #fix
         video_length: Optional[int],
         height: Optional[int] = None,
         width: Optional[int] = None,
@@ -542,7 +553,8 @@ class AnimationPipeline(DiffusionPipeline):
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
-        controlnet_condition: list = None,
+        controlnet_condition1: list = None,
+        controlnet_condition2: list = None,
         controlnet_conditioning_scale: float = 1.0,
         context_frames: int = 16,
         context_stride: int = 1,
@@ -566,7 +578,7 @@ class AnimationPipeline(DiffusionPipeline):
         - num_actual_inference_steps    : number of actual inference steps (while total steps is num_inference_steps) 
         """
         # controlnet = self.controlnet
-        processors = self.processors
+        # processors = self.processors
         # Default height and width to unet
         height = height or self.unet.config.sample_size * self.vae_scale_factor
         width = width or self.unet.config.sample_size * self.vae_scale_factor
@@ -608,9 +620,10 @@ class AnimationPipeline(DiffusionPipeline):
         assert num_videos_per_prompt == 1   # FIXME: verify if num_videos_per_prompt > 1 works
         assert batch_size == 1              # FIXME: verify if batch_size > 1 works
         control = self.prepare_condition(
-                condition=controlnet_condition,
+                condition1=controlnet_condition1,
+                condition2=controlnet_condition2,
                 device=device,
-                dtype=controlnet.dtype,
+                dtype=torch.float16, #fix cung
                 num_videos_per_prompt=num_videos_per_prompt,
                 do_classifier_free_guidance=do_classifier_free_guidance,
             )
@@ -704,7 +717,7 @@ class AnimationPipeline(DiffusionPipeline):
                         t,
                         encoder_hidden_states=torch.cat([controlnet_text_embeddings_c[c] for c in context]),
                         controlnet_cond=torch.cat([controlnet_cond_images[c] for c in context]),
-                        conditioning_scale=controlnet_conditioning_scale,
+                        conditioning_scale=controlnet_conditioning_scale,   
                         return_dict=False,
                     )
 

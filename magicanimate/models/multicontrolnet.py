@@ -6,7 +6,7 @@ import PIL.Image
 import torch
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-from controlnet import ControlNetModel #fix
+from magicanimate.models.controlnet import ControlNetModel #fix
 # from diffusers import AutoencoderKL, ControlNetModel, UNet2DConditionModel 
 # from diffusers.schedulers import KarrasDiffusionSchedulers 
 from diffusers.utils import (
@@ -29,13 +29,13 @@ class ControlNetProcessor(object):
         self,
         controlnet: ControlNetModel,
         # image: Union[torch.FloatTensor, PIL.Image.Image, List[torch.FloatTensor], List[PIL.Image.Image]],
-        controlnet_cond = torch.FloatTensor, #fix
-        conditioning_scale: float = 1.0,
+        # controlnet_cond = torch.FloatTensor, #fix
+        # conditioning_scale: float = 1.0,
     ):
         self.controlnet = controlnet
         # self.image = image
-        self.controlnet_cond = controlnet_cond #fix
-        self.conditioning_scale = conditioning_scale
+        # self.controlnet_cond = controlnet_cond #fix
+        # self.conditioning_scale = conditioning_scale
 
     # def _default_height_width(self, height, width, image):
     #     if isinstance(image, list):
@@ -136,24 +136,19 @@ class ControlNetProcessor(object):
 
     def __call__(
         self,
-        sample: torch.FloatTensor,
-        timestep: Union[torch.Tensor, float, int],
-        encoder_hidden_states: torch.Tensor,
-        class_labels: Optional[torch.Tensor] = None,
-        timestep_cond: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        return_dict: bool = True,
+        controlnet_latent_input,
+        t,
+        encoder_hidden_states,
+        controlnet_cond, #fix
+        conditioning_scale,
+        return_dict,
     ) -> Tuple:
         down_block_res_samples, mid_block_res_sample = self.controlnet(
-            sample=sample,
-            controlnet_cond=self.controlnet_cond, #fix
-            timestep=timestep,
-            encoder_hidden_states=encoder_hidden_states,
-            class_labels=class_labels,
-            timestep_cond=timestep_cond,
-            attention_mask=attention_mask,
-            cross_attention_kwargs=cross_attention_kwargs,
+            controlnet_latent_input,
+            t,
+            encoder_hidden_states,
+            controlnet_cond,
+            conditioning_scale, 
             return_dict=False,
         )
         down_block_res_samples = [
