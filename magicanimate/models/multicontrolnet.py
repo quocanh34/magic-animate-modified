@@ -152,7 +152,7 @@ class ControlNetProcessor(object):
             return_dict=False,
         )
         down_block_res_samples = [
-            down_block_res_sample * self.conditioning_scale for down_block_res_sample in down_block_res_samples
+            down_block_res_sample * conditioning_scale for down_block_res_sample in down_block_res_samples
         ]
-        mid_block_res_sample *= self.conditioning_scale
+        mid_block_res_sample *= conditioning_scale
         return (down_block_res_samples, mid_block_res_sample)
