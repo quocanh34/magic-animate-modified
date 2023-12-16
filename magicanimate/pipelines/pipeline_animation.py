@@ -363,12 +363,12 @@ class AnimationPipeline(DiffusionPipeline):
         condition2 = rearrange(condition2, 'b f h w c -> (b f) c h w').clone()
 
         # Here, we're averaging the two conditions
-        combined_condition = (condition1 + condition2) / 2
+        combined_condition = (condition1 + condition2)
 
         if do_classifier_free_guidance:
             combined_condition = torch.cat([combined_condition] * 2)
 
-        combined_condition = torch.from_numpy(combined_condition.copy()).to(device=device, dtype=dtype)
+        #combined_condition = torch.from_numpy(combined_condition.copy()).to(device=device, dtype=dtype)
         return combined_condition
 
     def next_step(
