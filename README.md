@@ -5,6 +5,7 @@
 - Setting weight for each model of controlnet if necessary
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
+- Here is the repo for more details of multicontrolnet (branch multicontrolnet): https://github.com/takuma104/diffusers
 ## Instructions
 - Resize your input video to 512x512 and 25 fps at: https://www.video2edit.com/convert-to-video
 - Vid2DensePose colab link: https://colab.research.google.com/drive/1Vs9WnyIQmv0f7iI9R0HR25Onf7aX-az3?usp=sharing
