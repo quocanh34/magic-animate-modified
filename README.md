@@ -6,7 +6,7 @@
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
 ## Instructions
-- Resize your input video to 512x512 and 25 fps at: https://www.video2edit.com/convert-to-video?fbclid=IwAR0PLc6zhcvgt_O6KTKdX5rC9dfLHkqfnuo4fmQQuRskjfTY_X-jI3HE2Pw 
+- Resize your input video to 512x512 and 25 fps at: https://www.video2edit.com/convert-to-video?
 - Vid2DensePose colab link: https://colab.research.google.com/drive/1Vs9WnyIQmv0f7iI9R0HR25Onf7aX-az3?usp=sharing
 - Vid2OpenPose colab link: https://colab.research.google.com/drive/1NxH02XZBdDur_gkQtJgjbtZ7qrgvEt1q?usp=sharing
 - Vid2FaceOnly colab link: https://colab.research.google.com/drive/1wrXGs9awXxk7G80lONzK0qTA6OYfzusZ?usp=sharing
