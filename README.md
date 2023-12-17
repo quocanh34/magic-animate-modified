@@ -1,7 +1,7 @@
 <!-- # magic-edit.github.io -->
 # What and why modify?
 ## Updates
-- Impliment multicontrolnet for high quality and consistency of generated video (that can preserve facial and hand features more effectively)
+- Implement multicontrolnet for high quality and consistency of generated video (that can preserve facial and hand features more effectively)
 - Setting weight average for each controlnet model if necessary
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
@@ -19,7 +19,7 @@
 <table align="center">
   <tr>
   <td>
-    <img src="assets/teaser/demo.png">
+    <img src="assets/teaser/demopng">
   </td>
   </tr>
 </table>
