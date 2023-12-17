@@ -19,6 +19,13 @@
 <table align="center">
   <tr>
   <td>
+    <img src="assets/teaser/demo.png">
+  </td>
+  </tr>
+</table>
+<table align="center">
+  <tr>
+  <td>
     <img src="assets/teaser/densepose0875_openpose_0125.gif">
   </td>
   </tr>
