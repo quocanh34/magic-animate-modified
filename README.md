@@ -1,7 +1,7 @@
 <!-- # magic-edit.github.io -->
 # What and why modify?
 ## Updates
-- Adding multicontrolnet models for high quality of generated video (that can preserve facial and hand features more effectively)
+- Adding multicontrolnet models for high quality and consistency of generated video (that can preserve facial and hand features more effectively)
 - Setting weight average for each controlnet model if necessary
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
@@ -13,7 +13,7 @@
 - Vid2FaceOnly colab link: https://colab.research.google.com/drive/1wrXGs9awXxk7G80lONzK0qTA6OYfzusZ?usp=sharing
 - Download controlnet models to folder **[pretrained_models/MagicAnimate]**
 - Set up configs in **[configs/prompts/animation.yaml]**
-- Then run installation and inference like original repository
+- Then run installation and inference like the original repository.
 
 ## Some test results
 <table align="center">
