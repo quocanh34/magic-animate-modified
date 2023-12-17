@@ -1,5 +1,29 @@
 <!-- # magic-edit.github.io -->
+# What and why modify?
+## Updates
+- Adding multicontrolnet models for high quality of generated video (that can preserve facial and hand features more effectively)
+- Setting weight for each model of controlnet if neccessary
+- Colabs for more consistent generation of densepose and openpose
+## Instructions
+- Vid2DensePose colab link: https://colab.research.google.com/drive/1Vs9WnyIQmv0f7iI9R0HR25Onf7aX-az3?usp=sharing
+- Vid2OpenPose colab link: https://colab.research.google.com/drive/1NxH02XZBdDur_gkQtJgjbtZ7qrgvEt1q?usp=sharing
+- Vid2FaceOnly colab link: https://colab.research.google.com/drive/1wrXGs9awXxk7G80lONzK0qTA6OYfzusZ?usp=sharing
+- Download controlnet models to folder *pretrained_models/MagicAnimate*
+- Set up configs in *configs/prompts/animation.yaml*
+- Then run installation and inference like original repository
 
+## Some test results
+<table align="center">
+  <tr>
+  <td>
+    <img src="assets/teaser/densepose0875_openposeface_0125 (copy).gif">
+  </td>
+  </tr>
+</table>
+
+# -------------------------------------------------------------------------------------------
+
+# Below is the README.md from original repository.
 <p align="center">
 
   <h2 align="center">MagicAnimate: Temporally Consistent Human Image Animation using Diffusion Model</h2>
