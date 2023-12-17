@@ -2,7 +2,7 @@
 # What and why modify?
 ## Updates
 - Adding multicontrolnet models for high quality of generated video (that can preserve facial and hand features more effectively)
-- Setting weight for each model of controlnet if neccessary
+- Setting weight for each model of controlnet if necessary
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
 ## Instructions
