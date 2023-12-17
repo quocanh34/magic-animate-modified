@@ -9,8 +9,8 @@
 - Vid2DensePose colab link: https://colab.research.google.com/drive/1Vs9WnyIQmv0f7iI9R0HR25Onf7aX-az3?usp=sharing
 - Vid2OpenPose colab link: https://colab.research.google.com/drive/1NxH02XZBdDur_gkQtJgjbtZ7qrgvEt1q?usp=sharing
 - Vid2FaceOnly colab link: https://colab.research.google.com/drive/1wrXGs9awXxk7G80lONzK0qTA6OYfzusZ?usp=sharing
-- Download controlnet models to folder *pretrained_models/MagicAnimate*
-- Set up configs in *configs/prompts/animation.yaml*
+- Download controlnet models to folder **[pretrained_models/MagicAnimate]**
+- Set up configs in **[configs/prompts/animation.yaml]**
 - Then run installation and inference like original repository
 
 ## Some test results
