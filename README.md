@@ -4,6 +4,7 @@
 - Adding multicontrolnet models for high quality of generated video (that can preserve facial and hand features more effectively)
 - Setting weight for each model of controlnet if neccessary
 - Colabs for more consistent generation of densepose and openpose
+- The code is currently under process (usable, but contains a significant amount of hardcoding).
 ## Instructions
 - Vid2DensePose colab link: https://colab.research.google.com/drive/1Vs9WnyIQmv0f7iI9R0HR25Onf7aX-az3?usp=sharing
 - Vid2OpenPose colab link: https://colab.research.google.com/drive/1NxH02XZBdDur_gkQtJgjbtZ7qrgvEt1q?usp=sharing
