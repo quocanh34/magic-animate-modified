@@ -2,7 +2,7 @@
 # What and why modify?
 ## Updates
 - Adding multicontrolnet models for high quality of generated video (that can preserve facial and hand features more effectively)
-- Setting weight for each model of controlnet if necessary
+- Setting weight average for each controlnet model if necessary
 - Colabs for more consistent generation of densepose and openpose
 - The code is currently under process (usable, but contains a significant amount of hardcoding).
 - Here is the repo for more details of multicontrolnet (branch multicontrolnet): https://github.com/takuma104/diffusers
