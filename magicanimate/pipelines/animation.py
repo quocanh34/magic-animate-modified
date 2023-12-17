@@ -87,25 +87,20 @@ def main(args):
         vae = AutoencoderKL.from_pretrained(config.pretrained_model_path, subfolder="vae")
 
     ### Load controlnet
-    controlnet1   = ControlNetModel.from_pretrained(config.pretrained_controlnet_path1) #fix
-    controlnet2   = ControlNetModel.from_pretrained(config.pretrained_controlnet_path2) #fix
-
+    controlnet   = ControlNetModel.from_pretrained(config.pretrained_controlnet_path)
 
     unet.enable_xformers_memory_efficient_attention()
     appearance_encoder.enable_xformers_memory_efficient_attention()
-    controlnet1.enable_xformers_memory_efficient_attention() #fix
-    controlnet2.enable_xformers_memory_efficient_attention() #fix
+    controlnet.enable_xformers_memory_efficient_attention()
 
     vae.to(torch.float16)
     unet.to(torch.float16)
     text_encoder.to(torch.float16)
     appearance_encoder.to(torch.float16)
-    controlnet1.to(torch.float16) #fix
-    controlnet2.to(torch.float16) #fix
- 
-    #fix
+    controlnet.to(torch.float16)
+
     pipeline = AnimationPipeline(
-        vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet, processors=[controlnet1, controlnet2],
+        vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet, controlnet=controlnet,
         scheduler=DDIMScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)),
         # NOTE: UniPCMultistepScheduler
     )

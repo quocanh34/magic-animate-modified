@@ -54,8 +54,7 @@ from diffusers.utils import deprecate, logging, BaseOutput
 from einops import rearrange
 
 from magicanimate.models.unet_controlnet import UNet3DConditionModel
-from magicanimate.models.multicontrolnet import ControlNetProcessor #fix
-# from magicanimate.models.controlnet import ControlNetModel
+from magicanimate.models.controlnet import ControlNetModel
 from magicanimate.models.mutual_self_attention import ReferenceAttentionControl
 from magicanimate.pipelines.context import (
     get_context_scheduler,
@@ -80,8 +79,7 @@ class AnimationPipeline(DiffusionPipeline):
         text_encoder: CLIPTextModel,
         tokenizer: CLIPTokenizer,
         unet: UNet3DConditionModel,
-        # controlnet: ControlNetModel,
-        # processors: List[ControlNetProcessor],
+        controlnet: ControlNetModel,
         scheduler: Union[
             DDIMScheduler,
             PNDMScheduler,
@@ -146,7 +144,7 @@ class AnimationPipeline(DiffusionPipeline):
             text_encoder=text_encoder,
             tokenizer=tokenizer,
             unet=unet,
-            # controlnet1=processors[0],
+            controlnet=controlnet,
             scheduler=scheduler,
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
@@ -351,25 +349,14 @@ class AnimationPipeline(DiffusionPipeline):
         latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-    def prepare_condition(self, condition1, condition2, num_videos_per_prompt, device, dtype, do_classifier_free_guidance):
-        # Prepare first condition
-        condition1 = torch.from_numpy(condition1.copy()).to(device=device, dtype=dtype) / 255.0
-        condition1 = torch.stack([condition1 for _ in range(num_videos_per_prompt)], dim=0)
-        condition1 = rearrange(condition1, 'b f h w c -> (b f) c h w').clone()
-
-        # Prepare second condition
-        condition2 = torch.from_numpy(condition2.copy()).to(device=device, dtype=dtype) / 255.0
-        condition2 = torch.stack([condition2 for _ in range(num_videos_per_prompt)], dim=0)
-        condition2 = rearrange(condition2, 'b f h w c -> (b f) c h w').clone()
-
-        # Here, we're averaging the two conditions
-        combined_condition = (condition1*8+condition2*2)/10
-
+    def prepare_condition(self, condition, num_videos_per_prompt, device, dtype, do_classifier_free_guidance):
+        # prepare conditions for controlnet
+        condition = torch.from_numpy(condition.copy()).to(device=device, dtype=dtype) / 255.0
+        condition = torch.stack([condition for _ in range(num_videos_per_prompt)], dim=0)
+        condition = rearrange(condition, 'b f h w c -> (b f) c h w').clone()
         if do_classifier_free_guidance:
-            combined_condition = torch.cat([combined_condition] * 2)
-
-        #combined_condition = torch.from_numpy(combined_condition.copy()).to(device=device, dtype=dtype)
-        return combined_condition
+            condition = torch.cat([condition] * 2)
+        return condition
 
     def next_step(
         self,
@@ -538,7 +525,6 @@ class AnimationPipeline(DiffusionPipeline):
     def __call__(
         self,
         prompt: Union[str, List[str]],
-        processors: List[ControlNetProcessor], #fix
         video_length: Optional[int],
         height: Optional[int] = None,
         width: Optional[int] = None,
@@ -553,8 +539,7 @@ class AnimationPipeline(DiffusionPipeline):
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
-        controlnet_condition1: list = None,
-        controlnet_condition2: list = None,
+        controlnet_condition: list = None,
         controlnet_conditioning_scale: float = 1.0,
         context_frames: int = 16,
         context_stride: int = 1,
@@ -577,8 +562,8 @@ class AnimationPipeline(DiffusionPipeline):
         - init_latents                  : initial latents to begin with (used along with invert())
         - num_actual_inference_steps    : number of actual inference steps (while total steps is num_inference_steps) 
         """
-        # controlnet = self.controlnet
-        # processors = self.processors
+        controlnet = self.controlnet
+
         # Default height and width to unet
         height = height or self.unet.config.sample_size * self.vae_scale_factor
         width = width or self.unet.config.sample_size * self.vae_scale_factor
@@ -620,10 +605,9 @@ class AnimationPipeline(DiffusionPipeline):
         assert num_videos_per_prompt == 1   # FIXME: verify if num_videos_per_prompt > 1 works
         assert batch_size == 1              # FIXME: verify if batch_size > 1 works
         control = self.prepare_condition(
-                condition1=controlnet_condition1,
-                condition2=controlnet_condition2,
+                condition=controlnet_condition,
                 device=device,
-                dtype=torch.float16, #fix cung
+                dtype=controlnet.dtype,
                 num_videos_per_prompt=num_videos_per_prompt,
                 do_classifier_free_guidance=do_classifier_free_guidance,
             )
@@ -709,36 +693,15 @@ class AnimationPipeline(DiffusionPipeline):
                 b, c, f, h, w = controlnet_latent_input.shape
                 controlnet_latent_input = rearrange(controlnet_latent_input, "b c f h w -> (b f) c h w")
                 
-
-                ################################################fix################################################
-                for i, processor in enumerate(processors):
-                    down_samples, mid_sample = processor(
-                        controlnet_latent_input,
-                        t,
-                        encoder_hidden_states=torch.cat([controlnet_text_embeddings_c[c] for c in context]),
-                        controlnet_cond=torch.cat([controlnet_cond_images[c] for c in context]),
-                        conditioning_scale=controlnet_conditioning_scale,   
-                        return_dict=False,
-                    )
-
-                    if i == 0:
-                        down_block_res_samples, mid_block_res_sample = down_samples, mid_sample
-                    else:
-                        down_block_res_samples = [
-                            d_prev + d_curr for d_prev, d_curr in zip(down_block_res_samples, down_samples)
-                        ]
-                        mid_block_res_sample = mid_block_res_sample + mid_sample  
-                ################################################fix################################################
-
                 # controlnet inference
-                # down_block_res_samples, mid_block_res_sample = self.controlnet(
-                #     controlnet_latent_input,
-                #     t,
-                #     encoder_hidden_states=torch.cat([controlnet_text_embeddings_c[c] for c in context]),
-                #     controlnet_cond=torch.cat([controlnet_cond_images[c] for c in context]),
-                #     conditioning_scale=controlnet_conditioning_scale,
-                #     return_dict=False,
-                # )
+                down_block_res_samples, mid_block_res_sample = self.controlnet(
+                    controlnet_latent_input,
+                    t,
+                    encoder_hidden_states=torch.cat([controlnet_text_embeddings_c[c] for c in context]),
+                    controlnet_cond=torch.cat([controlnet_cond_images[c] for c in context]),
+                    conditioning_scale=controlnet_conditioning_scale,
+                    return_dict=False,
+                )
 
                 for j, k in enumerate(np.concatenate(np.array(context))):
                     controlnet_res_samples_cache_dict[k] = ([sample[j:j+1] for sample in down_block_res_samples], mid_block_res_sample[j:j+1])

@@ -1,7 +1,6 @@
-pretrained_model_path: "pretrained_models/counterfeit-v30"
+pretrained_model_path: "pretrained_models/stable-diffusion-v1-5"
 pretrained_vae_path: "pretrained_models/sd-vae-ft-mse"
-pretrained_controlnet_path1: "pretrained_models/MagicAnimate/densepose_controlnet"
-pretrained_controlnet_path2: "pretrained_models/MagicAnimate/control_v11p_sd15_openpose"
+pretrained_controlnet_path: "pretrained_models/MagicAnimate/densepose_controlnet"
 pretrained_appearance_encoder_path: "pretrained_models/MagicAnimate/appearance_encoder"
 pretrained_unet_path: ""
 

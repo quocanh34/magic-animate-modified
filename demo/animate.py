@@ -30,7 +30,6 @@ from magicanimate.models.controlnet import ControlNetModel
 from magicanimate.models.appearance_encoder import AppearanceEncoderModel
 from magicanimate.models.mutual_self_attention import ReferenceAttentionControl
 from magicanimate.pipelines.pipeline_animation import AnimationPipeline
-from magicanimate.models.multicontrolnet import ControlNetProcessor #fix
 from magicanimate.utils.util import save_videos_grid
 from accelerate.utils import set_seed
 
@@ -71,28 +70,20 @@ class MagicAnimate():
             vae = AutoencoderKL.from_pretrained(config.pretrained_model_path, subfolder="vae")
 
         ### Load controlnet
-        controlnet1  = ControlNetModel.from_pretrained(config.pretrained_controlnet_path1) #fix
-        controlnet2  = ControlNetModel.from_pretrained(config.pretrained_controlnet_path2) #fix
+        controlnet   = ControlNetModel.from_pretrained(config.pretrained_controlnet_path)
 
         vae.to(torch.float16)
         unet.to(torch.float16)
         text_encoder.to(torch.float16)
-        # controlnet.to(torch.float16)
-        controlnet1 = controlnet1.to(torch.float16).to("cuda") #fix
-        controlnet2 = controlnet2.to(torch.float16).to("cuda") #fix
-
+        controlnet.to(torch.float16)
         self.appearance_encoder.to(torch.float16)
         
         unet.enable_xformers_memory_efficient_attention()
         self.appearance_encoder.enable_xformers_memory_efficient_attention()
-        # controlnet.enable_xformers_memory_efficient_attention()
-        controlnet1.enable_xformers_memory_efficient_attention() #fix
-        controlnet2.enable_xformers_memory_efficient_attention() #fix
-
-        self.processors = [ControlNetProcessor(controlnet1), ControlNetProcessor(controlnet2)]
+        controlnet.enable_xformers_memory_efficient_attention()
 
         self.pipeline = AnimationPipeline(
-            vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet,
+            vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet, controlnet=controlnet,
             scheduler=DDIMScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)),
             # NOTE: UniPCMultistepScheduler
         ).to("cuda")
@@ -134,7 +125,7 @@ class MagicAnimate():
         
         print("Initialization Done!")
         
-    def __call__(self, source_image, motion_sequence_list, random_seed, step, guidance_scale, size=512):
+    def __call__(self, source_image, motion_sequence, random_seed, step, guidance_scale, size=512):
             prompt = n_prompt = ""
             random_seed = int(random_seed)
             step = int(step)
@@ -146,49 +137,32 @@ class MagicAnimate():
                 set_seed(random_seed)
             else:
                 torch.seed()
-            motion_sequence1 = motion_sequence_list[0]
-            motion_sequence2 = motion_sequence_list[1]
 
-            if motion_sequence1.endswith('.mp4'):
-                control1 = VideoReader(motion_sequence1).read()
-                if control1[0].shape[0] != size:
-                    control1 = [np.array(Image.fromarray(c).resize((size, size))) for c in control1]
-                control1 = np.array(control1)
-
-            if motion_sequence2.endswith('.mp4'):
-                control2 = VideoReader(motion_sequence2).read()
-                if control2[0].shape[0] != size:
-                    control2 = [np.array(Image.fromarray(c).resize((size, size))) for c in control2]
-                control2 = np.array(control2)
+            if motion_sequence.endswith('.mp4'):
+                control = VideoReader(motion_sequence).read()
+                if control[0].shape[0] != size:
+                    control = [np.array(Image.fromarray(c).resize((size, size))) for c in control]
+                control = np.array(control)
             
             if source_image.shape[0] != size:
                 source_image = np.array(Image.fromarray(source_image).resize((size, size)))
             H, W, C = source_image.shape
             
             init_latents = None
-            original_length = control1.shape[0]
-
-            if control1.shape[0] % self.L > 0:
-                control1 = np.pad(control1, ((0, self.L-control1.shape[0] % self.L), (0, 0), (0, 0), (0, 0)), mode='edge')
-
-            if control2.shape[0] % self.L > 0:
-                control2 = np.pad(control2, ((0, self.L-control2.shape[0] % self.L), (0, 0), (0, 0), (0, 0)), mode='edge')
-
+            original_length = control.shape[0]
+            if control.shape[0] % self.L > 0:
+                control = np.pad(control, ((0, self.L-control.shape[0] % self.L), (0, 0), (0, 0), (0, 0)), mode='edge')
             generator = torch.Generator(device=torch.device("cuda:0"))
-
             generator.manual_seed(torch.initial_seed())
-
             sample = self.pipeline(
                 prompt,
-                processors              = self.processors,
                 negative_prompt         = n_prompt,
                 num_inference_steps     = step,
                 guidance_scale          = guidance_scale,
                 width                   = W,
                 height                  = H,
-                video_length            = len(control1),
-                controlnet_condition1    = control1,
-                controlnet_condition2    = control2,
+                video_length            = len(control),
+                controlnet_condition    = control,
                 init_latents            = init_latents,
                 generator               = generator,
                 appearance_encoder       = self.appearance_encoder, 
@@ -201,7 +175,6 @@ class MagicAnimate():
             source_images = rearrange(torch.from_numpy(source_images), "t h w c -> 1 c t h w") / 255.0
             samples_per_video.append(source_images)
             
-            control = (control1*8+control2*2)/10
             control = control / 255.0
             control = rearrange(control, "t h w c -> 1 c t h w")
             control = torch.from_numpy(control)
@@ -219,3 +192,4 @@ class MagicAnimate():
             save_videos_grid(samples_per_video, animation_path)
             
             return animation_path
+            
