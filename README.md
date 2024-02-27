@@ -31,9 +31,6 @@
   </tr>
 </table>
 
-# -----------------------------------------------------------------------------
-
-# Below is the README.md from original repository.
 <p align="center">
 
   <h2 align="center">MagicAnimate: Temporally Consistent Human Image Animation using Diffusion Model</h2>
