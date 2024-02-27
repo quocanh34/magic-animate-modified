@@ -19,7 +19,7 @@
 <table align="center">
   <tr>
   <td>
-    <img src="assets/teaser/demopng">
+    <img src="assets/teaser/demo.png">
   </td>
   </tr>
 </table>
