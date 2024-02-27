@@ -15,7 +15,7 @@
 - Set up configs in **[configs/prompts/animation.yaml]**
 - Then run installation and inference like the original repository.
 
-## Some test results
+## Results
 <table align="center">
   <tr>
   <td>
